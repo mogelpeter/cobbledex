@@ -34,11 +34,11 @@ public class HttpServerManager {
             int port = StartupValidator.findAvailablePort(CobbleDexConfig.PORT.get());
             server = HttpServer.create(new InetSocketAddress(host, port), 0);
             // Register most specific paths first — HttpServer matches by longest prefix.
-            server.createContext("/events",       new SseHandler(sseManager));
-            server.createContext("/api/data",    new DataHandler(dataCache));
-            server.createContext("/api/species", new SpeciesHandler());
-            server.createContext("/static/",     new StaticHandler());
-            server.createContext("/",            new IndexHandler());
+            server.createContext("/events",       withSecurity(new SseHandler(sseManager)));
+            server.createContext("/api/data",    withSecurity(new DataHandler(dataCache)));
+            server.createContext("/api/species", withSecurity(new SpeciesHandler()));
+            server.createContext("/static/",     withSecurity(new StaticHandler()));
+            server.createContext("/",            withSecurity(new IndexHandler()));
             // CachedThreadPool: each SSE client blocks one thread, unbounded growth needed.
             server.setExecutor(Executors.newCachedThreadPool());
             server.start();
@@ -46,6 +46,24 @@ public class HttpServerManager {
         } catch (IOException e) {
             LOGGER.error("CobbleDex web server failed to start", e);
         }
+    }
+
+    private static com.sun.net.httpserver.HttpHandler withSecurity(com.sun.net.httpserver.HttpHandler handler) {
+        return exchange -> {
+            var h = exchange.getResponseHeaders();
+            h.add("X-Frame-Options",        "DENY");
+            h.add("X-Content-Type-Options", "nosniff");
+            h.add("Referrer-Policy",        "strict-origin");
+            h.add("Content-Security-Policy",
+                    "default-src 'self'; " +
+                    "script-src 'self'; " +
+                    "style-src 'self' https://fonts.googleapis.com; " +
+                    "font-src https://fonts.gstatic.com; " +
+                    "img-src 'self' https://raw.githubusercontent.com data:; " +
+                    "connect-src 'self'; " +
+                    "frame-ancestors 'none'");
+            handler.handle(exchange);
+        };
     }
 
     public void stop() {

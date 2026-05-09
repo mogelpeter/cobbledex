@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CobbleDex</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png">
+</head>
+<body>
+  <header>
+    <h1>CobbleDex</h1>
+    <span id="live-badge" class="live-badge">● LIVE</span>
+  </header>
+  <nav id="player-tabs"></nav>
+  <main>
+    <div class="controls-bar">
+      <div id="view-tabs">
+        <button id="tab-dex"  class="view-tab active">Pokédex</button>
+        <button id="tab-team" class="view-tab">Team</button>
+      </div>
+      <input id="search-input" type="text" placeholder="Search Pokémon…" autocomplete="off">
+      <div id="sort-controls">
+        <label class="sort-label" for="sort-select">Sort:</label>
+        <select id="sort-select">
+          <option value="dex">Dex #</option>
+          <option value="name">Name</option>
+          <option value="status">Status</option>
+        </select>
+      </div>
+    </div>
+    <div id="dex-stats"></div>
+    <div id="dex-grid"></div>
+    <div id="team-view"></div>
+  </main>
+
+  <div id="modal" class="hidden">
+    <div id="modal-backdrop"></div>
+    <div id="modal-box">
+      <div id="modal-title"></div>
+      <div id="modal-cards"></div>
+      <button id="modal-close">× Close</button>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -10,14 +10,14 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; min-height: 100vh; }
+body { background: var(--bg); color: var(--text); font-family: 'Nunito', system-ui, sans-serif; min-height: 100vh; }
 
 header {
   display: flex; align-items: center; gap: 12px;
   padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface);
 }
-header h1 { font-size: 1.3rem; }
-.live-badge { color: var(--caught-color); font-size: 0.8rem; }
+header h1 { font-size: 0.95rem; font-family: 'Press Start 2P', monospace; letter-spacing: -0.01em; line-height: 1.5; }
+.live-badge { color: var(--caught-color); font-size: 0.5rem; font-family: 'Press Start 2P', monospace; }
 .live-badge.offline { color: #f85149; }
 
 /* Player tabs */
@@ -27,7 +27,8 @@ nav {
 }
 .tab {
   background: none; border: 1px solid var(--border); color: var(--muted);
-  padding: 5px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.15s;
+  padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.5rem;
+  font-family: 'Press Start 2P', monospace; transition: all 0.15s; line-height: 1.6;
 }
 .tab:hover  { border-color: var(--accent); color: var(--accent); }
 .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -58,12 +59,13 @@ main { padding: 18px 24px; }
 
 .view-tab {
   background: none; border: 1px solid var(--border); color: var(--muted);
-  padding: 5px 14px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; transition: all 0.15s;
+  padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.5rem;
+  font-family: 'Press Start 2P', monospace; transition: all 0.15s; line-height: 1.6;
 }
 .view-tab:hover { border-color: var(--accent); color: var(--accent); }
 .view-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-#dex-stats { color: var(--muted); font-size: 0.85rem; margin-bottom: 14px; }
+#dex-stats { color: var(--muted); font-size: 0.55rem; margin-bottom: 18px; font-family: 'Press Start 2P', monospace; line-height: 2; }
 
 /* ─── Pokédex grid ─────────────────────────────────────────────────────────── */
 #dex-grid {
@@ -86,8 +88,8 @@ main { padding: 18px 24px; }
 .dex-cell.unseen .dex-name { color: var(--muted); }
 .dex-cell.unseen .dex-num  { color: #484f58; }
 
-.dex-num  { font-size: 0.65rem; color: var(--muted); }
-.dex-name { font-size: 0.7rem; }
+.dex-num  { font-size: 0.45rem; color: var(--muted); font-family: 'Press Start 2P', monospace; }
+.dex-name { font-size: 0.68rem; font-family: 'Nunito', sans-serif; font-weight: 600; }
 
 /* Sprites */
 .dex-sprite { width: 56px; height: 56px; object-fit: contain; image-rendering: pixelated; }
@@ -196,7 +198,8 @@ main { padding: 18px 24px; }
 
 /* Type badges */
 .type-badge {
-  font-size: 0.68rem; padding: 2px 7px; border-radius: 4px; color: #fff; font-weight: 500;
+  font-size: 0.45rem; padding: 3px 7px; border-radius: 4px; color: #fff; font-weight: 700;
+  font-family: 'Press Start 2P', monospace; line-height: 1.6;
 }
 .type-normal   { background: #9b9b9b; color: #000; }
 .type-fire     { background: #f05030; }
@@ -231,7 +234,7 @@ main { padding: 18px 24px; }
 }
 .stat-item  { display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .stat-val   { font-size: 1.5rem; font-weight: 700; }
-.stat-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.stat-label { font-size: 0.45rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Press Start 2P', monospace; line-height: 2; }
 .caught-val { color: var(--caught-color); }
 .seen-val   { color: var(--seen-color); }
 .accent-val { color: var(--accent); }

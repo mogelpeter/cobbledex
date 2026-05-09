@@ -85,4 +85,44 @@ class DiscordWebhookServiceTest {
         String json = DiscordWebhookService.buildPayload("Dave", makeDefensiveEntry());
         assertTrue(json.contains("Unknown"));
     }
+
+    @Test
+    void buildPayload_hasTitleUrl() {
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null));
+        assertTrue(json.contains("dex.lyx.wtf"));
+    }
+
+    @Test
+    void buildPayload_hasThumbnailWithSpriteUrl() {
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null));
+        assertTrue(json.contains("\"thumbnail\""));
+        assertTrue(json.contains("sprites/pokemon/6.png"));
+    }
+
+    @Test
+    void buildPayload_shinyHasShinySpriteUrl() {
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(true, null));
+        assertTrue(json.contains("sprites/pokemon/shiny/6.png"));
+    }
+
+    @Test
+    void buildPayload_hasFooter() {
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null));
+        assertTrue(json.contains("\"footer\""));
+        assertTrue(json.contains("CobbleDex"));
+    }
+
+    @Test
+    void buildPayload_hasTimestamp() {
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null));
+        assertTrue(json.contains("\"timestamp\""));
+    }
+
+    @Test
+    void buildPayload_hasWebhookUsernameAndAvatar() {
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null));
+        assertTrue(json.contains("\"username\""));
+        assertTrue(json.contains("\"avatar_url\""));
+        assertTrue(json.contains("poke-ball.png"));
+    }
 }

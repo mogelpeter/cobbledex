@@ -13,6 +13,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -96,12 +97,23 @@ public class DiscordWebhookService {
             addField(fields, "Moves", moveStr, false);
         }
 
-        Map<String, Object> embed = new LinkedHashMap<>();
-        embed.put("title",  title);
-        embed.put("color",  color);
-        embed.put("fields", fields);
+        String spriteUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"
+                + (shiny ? "shiny/" : "") + p.dexNumber() + ".png";
 
-        return GSON.toJson(Map.of("embeds", List.of(embed)));
+        Map<String, Object> embed = new LinkedHashMap<>();
+        embed.put("title",     title);
+        embed.put("url",       "https://dex.lyx.wtf/");
+        embed.put("color",     color);
+        embed.put("thumbnail", Map.of("url", spriteUrl));
+        embed.put("fields",    fields);
+        embed.put("footer",    Map.of("text", "CobbleDex"));
+        embed.put("timestamp", Instant.now().toString());
+
+        return GSON.toJson(Map.of(
+                "username",   "CobbleDex",
+                "avatar_url", "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png",
+                "embeds",     List.of(embed)
+        ));
     }
 
     private static void addField(List<Map<String, Object>> fields,

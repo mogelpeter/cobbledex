@@ -84,7 +84,7 @@ function calcBestPokemon(allPokemon) {
     const moveTypes = new Set(
       (p.moves ?? []).map(m => typeof m === 'string' ? null : m?.type?.toLowerCase()).filter(Boolean)
     );
-    const coverageScore = moveTypes.size / 4 * 100;
+    const coverageScore = Math.min(100, moveTypes.size / 4 * 100);
 
     const defScore = calcDefensiveScore(p.types ?? []);
 

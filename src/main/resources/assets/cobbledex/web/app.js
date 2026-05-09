@@ -26,6 +26,78 @@ function typeText(type)  { return TYPE_TEXT[type?.toLowerCase()] || '#fff'; }
 const STAT_COLORS = { hp:'#f87171', atk:'#fb923c', def:'#fbbf24', spa:'#60a5fa', spd:'#34d399', spe:'#a78bfa' };
 const STAT_LABELS = { hp:'HP', atk:'Atk', def:'Def', spa:'SpA', spd:'SpD', spe:'Spe' };
 
+// ─── Type chart (Gen 9 defensive) ────────────────────────────────────────────
+// DEFEND_CHART[defendingType][attackingType] = damage multiplier
+const DEFEND_CHART = {
+  normal:   { ghost: 0, fighting: 2 },
+  fire:     { water: 2, rock: 2, ground: 2, fire: 0.5, grass: 0.5, ice: 0.5, bug: 0.5, steel: 0.5, fairy: 0.5 },
+  water:    { electric: 2, grass: 2, fire: 0.5, water: 0.5, ice: 0.5, steel: 0.5 },
+  electric: { ground: 2, electric: 0.5, flying: 0.5, steel: 0.5 },
+  grass:    { fire: 2, ice: 2, poison: 2, flying: 2, bug: 2, water: 0.5, electric: 0.5, grass: 0.5, ground: 0.5 },
+  ice:      { fire: 2, fighting: 2, rock: 2, steel: 2, ice: 0.5 },
+  fighting: { flying: 2, psychic: 2, fairy: 2, bug: 0.5, rock: 0.5, dark: 0.5 },
+  poison:   { ground: 2, psychic: 2, steel: 0, grass: 0.5, fighting: 0.5, poison: 0.5, bug: 0.5, fairy: 0.5 },
+  ground:   { water: 2, grass: 2, ice: 2, electric: 0, poison: 0.5, rock: 0.5 },
+  flying:   { electric: 2, ice: 2, rock: 2, ground: 0, grass: 0.5, fighting: 0.5, bug: 0.5 },
+  psychic:  { bug: 2, ghost: 2, dark: 2, fighting: 0.5, psychic: 0.5 },
+  bug:      { fire: 2, flying: 2, rock: 2, grass: 0.5, fighting: 0.5, ground: 0.5 },
+  rock:     { water: 2, grass: 2, fighting: 2, ground: 2, steel: 2, normal: 0.5, fire: 0.5, poison: 0.5, flying: 0.5 },
+  ghost:    { ghost: 2, dark: 2, normal: 0, fighting: 0, poison: 0.5, bug: 0.5 },
+  dragon:   { ice: 2, dragon: 2, fairy: 2, fire: 0.5, water: 0.5, electric: 0.5, grass: 0.5 },
+  dark:     { fighting: 2, bug: 2, fairy: 2, psychic: 0, ghost: 0.5, dark: 0.5 },
+  steel:    { fire: 2, fighting: 2, ground: 2, poison: 0,
+              normal: 0.5, grass: 0.5, ice: 0.5, flying: 0.5, psychic: 0.5,
+              bug: 0.5, rock: 0.5, dragon: 0.5, steel: 0.5, fairy: 0.5,
+              water: 0.5, electric: 0.5 },
+  fairy:    { poison: 2, steel: 2, dragon: 0, fighting: 0.5, bug: 0.5, dark: 0.5 },
+};
+
+const ALL_ATTACKING_TYPES = [
+  'normal','fire','water','electric','grass','ice','fighting','poison',
+  'ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'
+];
+
+function calcDefensiveScore(types) {
+  let weak = 0, resist = 0, immune = 0;
+  for (const atk of ALL_ATTACKING_TYPES) {
+    let mult = 1;
+    for (const def of types) {
+      const row = DEFEND_CHART[def.toLowerCase()] ?? {};
+      mult *= (row[atk] ?? 1);
+    }
+    if (mult === 0) immune++;
+    else if (mult < 1) resist++;
+    else if (mult > 1) weak++;
+  }
+  // raw range roughly -8 to +14 for dual types; map to 0-100
+  const raw = resist + immune * 2 - weak;
+  return Math.max(0, Math.min(100, (raw + 8) / 22 * 100));
+}
+
+function calcBestPokemon(allPokemon) {
+  if (!allPokemon?.length) return null;
+  let best = null, bestScore = -Infinity;
+  for (const p of allPokemon) {
+    const statSum = p.stats ? Object.values(p.stats).reduce((a, b) => a + b, 0) : 0;
+    const statScore = Math.min(100, statSum / 720 * 100);
+
+    const moveTypes = new Set(
+      (p.moves ?? []).map(m => typeof m === 'string' ? null : m?.type?.toLowerCase()).filter(Boolean)
+    );
+    const coverageScore = moveTypes.size / 4 * 100;
+
+    const defScore = calcDefensiveScore(p.types ?? []);
+
+    const score = statScore * 0.5 + coverageScore * 0.25 + defScore * 0.25;
+    // tie-break: higher dex number wins (stable)
+    if (score > bestScore || (score === bestScore && p.dexNumber > (best?.dexNumber ?? 0))) {
+      bestScore = score;
+      best = p;
+    }
+  }
+  return best;
+}
+
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
 async function init() {
@@ -344,6 +416,41 @@ function buildCardHtml(p, isBest = false) {
     </div>`;
 }
 
+function buildTeamCardHtml(p, isBest) {
+  const name = p.nickname
+    ? `${esc(p.nickname)}${p.shiny ? ' ✨' : ''}`
+    : `${p.shiny ? '✨ ' : ''}${esc(p.displayName)}`;
+  const typeBadges = (p.types ?? []).map(t => {
+    const cls = TYPE_COLORS[t.toLowerCase()] ? t.toLowerCase() : 'normal';
+    return `<span class="type-badge type-${cls}">${esc(t)}</span>`;
+  }).join('');
+  const movesHtml   = buildMovesHtml(p.moves);
+  const statsHtml   = buildStatsHtml(p.stats, p.ivs);
+  const ballHtml    = buildBallHtml(p.ball);
+  const artUrl      = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.shiny ? 'shiny/' : ''}${p.dexNumber}.png`;
+  const artFallback = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.shiny ? 'shiny/' : ''}${p.dexNumber}.png`;
+  const shinyClass  = p.shiny ? ' shiny-shimmer' : '';
+  const bestClass   = isBest ? ' best-pokemon' : '';
+  const bestBadge   = isBest ? '<span class="best-badge">★ BEST</span>' : '';
+  const ballLabel   = p.ball ? ` ${esc(p.ball)}` : '';
+  return `
+    <div class="team-card${shinyClass}${bestClass}">
+      ${bestBadge}
+      <img class="team-sprite" src="${artUrl}" alt="${esc(p.displayName)}"
+           onerror="this.src='${artFallback}'">
+      <div class="team-card-info">
+        <div class="card-head">
+          <span class="poke-name">${name}</span>
+          <span class="poke-level">Lv.${p.level}</span>
+        </div>
+        <div class="team-types">${typeBadges}</div>
+        <div class="card-meta">${esc(p.nature)} · ${genderHtml(p.gender)}${ballHtml ? ` · ${ballHtml}${ballLabel}` : ''} · ${locationHtml(p.location)}</div>
+        <div class="moves">${movesHtml}</div>
+        ${statsHtml}
+      </div>
+    </div>`;
+}
+
 // ─── Team view ────────────────────────────────────────────────────────────────
 
 function renderTeam() {
@@ -371,35 +478,9 @@ function renderTeam() {
     })
     .join('');
 
-  const partyHtml = party.map(p => {
-    const label = p.nickname
-      ? `${p.nickname}${p.shiny ? ' ✨' : ''}`
-      : `${p.shiny ? '✨ ' : ''}${p.displayName}`;
-    const genderIcon = p.gender === 'MALE' ? '♂' : p.gender === 'FEMALE' ? '♀' : '⚲';
-    const typeBadges = p.types.map(t => `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`).join('');
-    const movesHtml  = buildMovesHtml(p.moves);
-    const statsHtml  = buildStatsHtml(p.stats, p.ivs);
-    const ballHtml   = buildBallHtml(p.ball);
-    const artUrl      = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.shiny ? 'shiny/' : ''}${p.dexNumber}.png`;
-    const artFallback = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.shiny ? 'shiny/' : ''}${p.dexNumber}.png`;
-    const shinyClass  = p.shiny ? ' shiny-shimmer' : '';
-    const ballLabel   = p.ball ? ` ${p.ball}` : '';
-    return `
-      <div class="team-card${shinyClass}">
-        <img class="team-sprite" src="${artUrl}" alt="${p.displayName}"
-             onerror="this.src='${artFallback}'">
-        <div class="team-card-info">
-          <div class="card-head">
-            <span class="poke-name">${label}</span>
-            <span class="poke-level">Lv.${p.level}</span>
-          </div>
-          <div class="team-types">${typeBadges}</div>
-          <div class="card-meta">${p.nature} · ${genderIcon}${ballHtml ? ` · ${ballHtml}${ballLabel}` : ''} · ${p.location}</div>
-          <div class="moves">${movesHtml}</div>
-          ${statsHtml}
-        </div>
-      </div>`;
-  }).join('') || '<p class="empty-msg">No Pokémon in party.</p>';
+  const best = calcBestPokemon(player.pokemon);
+  const partyHtml = party.map(p => buildTeamCardHtml(p, p === best))
+    .join('') || '<p class="empty-msg">No Pokémon in party.</p>';
 
   teamView.innerHTML = `
     <div class="player-stats">
@@ -442,7 +523,8 @@ function openModal(player, species) {
       <span class="modal-owner">${esc(player.playerName)} has ${entries.length}</span>
     </div>`;
 
-  el('modal-cards').innerHTML = entries.map(buildCardHtml).join('');
+  const best = calcBestPokemon(player.pokemon);
+  el('modal-cards').innerHTML = entries.map(p => buildCardHtml(p, p === best)).join('');
   el('modal').classList.remove('hidden');
 }
 

@@ -109,11 +109,11 @@ public class DiscordWebhookService {
         embed.put("footer",    Map.of("text", "CobbleDex"));
         embed.put("timestamp", Instant.now().toString());
 
-        return GSON.toJson(Map.of(
-                "username",   "CobbleDex",
-                "avatar_url", "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png",
-                "embeds",     List.of(embed)
-        ));
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("username",   "CobbleDex");
+        payload.put("avatar_url", "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png");
+        payload.put("embeds",     List.of(embed));
+        return GSON.toJson(payload);
     }
 
     private static void addField(List<Map<String, Object>> fields,

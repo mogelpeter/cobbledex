@@ -354,7 +354,7 @@ function renderTeam() {
     const ballHtml   = buildBallHtml(p.ball);
     const artUrl      = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.shiny ? 'shiny/' : ''}${p.dexNumber}.png`;
     const artFallback = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.shiny ? 'shiny/' : ''}${p.dexNumber}.png`;
-    const shinyClass  = p.shiny ? ' shiny-card' : '';
+    const shinyClass  = p.shiny ? ' shiny-shimmer' : '';
     const ballLabel   = p.ball ? ` ${p.ball}` : '';
     return `
       <div class="team-card${shinyClass}">

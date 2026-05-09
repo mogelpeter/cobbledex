@@ -75,7 +75,7 @@ main { padding: 18px 24px; }
   background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
   padding: 6px 5px 7px; text-align: center; display: flex; flex-direction: column;
   align-items: center; gap: 2px;
-  position: relative; overflow: hidden;
+  position: relative;
 }
 .dex-cell.caught { border-color: var(--caught-color); cursor: pointer; }
 .dex-cell.caught:hover { transform: scale(1.05); border-color: #56d364; }
@@ -101,9 +101,6 @@ main { padding: 18px 24px; }
 .shiny-card {
   border-color: #ffd700 !important;
 }
-
-.pokemon-card { position: relative; overflow: hidden; }
-.team-card    { position: relative; overflow: hidden; }
 
 @keyframes shiny-sweep {
   0%        { transform: translate(-160%, -60%) rotate(20deg); opacity: 0; }
@@ -155,6 +152,7 @@ main { padding: 18px 24px; }
 /* Pokémon card */
 .pokemon-card {
   background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 11px;
+  position: relative; overflow: hidden;
 }
 .card-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
 .poke-name  { font-weight: 600; font-size: 0.9rem; }
@@ -234,6 +232,7 @@ main { padding: 18px 24px; }
 .team-card {
   background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
   padding: 14px; display: flex; gap: 14px; align-items: flex-start;
+  position: relative; overflow: hidden;
 }
 .team-sprite    { width: 96px; height: 96px; object-fit: contain; flex-shrink: 0; }
 .team-card-info { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }

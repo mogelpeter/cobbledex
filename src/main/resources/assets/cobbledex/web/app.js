@@ -36,7 +36,7 @@ const DEFEND_CHART = {
   grass:    { fire: 2, ice: 2, poison: 2, flying: 2, bug: 2, water: 0.5, electric: 0.5, grass: 0.5, ground: 0.5 },
   ice:      { fire: 2, fighting: 2, rock: 2, steel: 2, ice: 0.5 },
   fighting: { flying: 2, psychic: 2, fairy: 2, bug: 0.5, rock: 0.5, dark: 0.5 },
-  poison:   { ground: 2, psychic: 2, steel: 0, grass: 0.5, fighting: 0.5, poison: 0.5, bug: 0.5, fairy: 0.5 },
+  poison:   { ground: 2, psychic: 2, grass: 0.5, fighting: 0.5, poison: 0.5, bug: 0.5, fairy: 0.5 },
   ground:   { water: 2, grass: 2, ice: 2, electric: 0, poison: 0.5, rock: 0.5 },
   flying:   { electric: 2, ice: 2, rock: 2, ground: 0, grass: 0.5, fighting: 0.5, bug: 0.5 },
   psychic:  { bug: 2, ghost: 2, dark: 2, fighting: 0.5, psychic: 0.5 },
@@ -387,9 +387,9 @@ function buildStatsHtml(stats, ivs) {
 
 function buildBallHtml(ball) {
   if (!ball) return '';
-  const ballId = ball.toLowerCase().replace(/ /g, '-');
+  const ballId = esc(ball.toLowerCase().replace(/ /g, '-'));
   return `<img class="ball-icon" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${ballId}.png"
-               alt="${ball}" title="${ball}" onerror="this.style.display='none'">`;
+               alt="${esc(ball)}" title="${esc(ball)}" onerror="this.style.display='none'">`;
 }
 
 function buildCardHtml(p, isBest = false) {

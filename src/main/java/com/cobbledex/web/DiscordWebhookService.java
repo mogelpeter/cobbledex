@@ -70,7 +70,7 @@ public class DiscordWebhookService {
                 "#" + String.format("%03d", p.dexNumber()) + " " + p.displayName(), true);
         addField(fields, "Level",   String.valueOf(p.level()),  true);
         addField(fields, "Nature",  p.nature(),                 true);
-        addField(fields, "Ball",    p.ball().isBlank() ? "Unknown" : p.ball(), true);
+        addField(fields, "Ball",    (p.ball() == null || p.ball().isBlank()) ? "Unknown" : p.ball(), true);
         addField(fields, "Shiny",   shiny ? "Yes ✨" : "No", true);
 
         if (p.nickname() != null && !p.nickname().isBlank()) {

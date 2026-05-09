@@ -119,6 +119,29 @@ document.addEventListener('visibilitychange', () => {
 function toDisplayName(id) {
   return id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
+
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function genderHtml(gender) {
+  if (gender === 'MALE')   return '<span class="gender-m">♂</span>';
+  if (gender === 'FEMALE') return '<span class="gender-f">♀</span>';
+  return '<span class="gender-n">◯</span>';
+}
+
+function locationHtml(loc) {
+  if (!loc) return '';
+  if (loc === 'party') return '<span class="location-badge party-badge">◈ Party</span>';
+  const boxName = esc(loc.replace(/^pc:/, ''));
+  return `<span class="location-badge pc-badge">◫ ${boxName}</span>`;
+}
+
 function activePlayer() {
   return state.players.find(p => p.uuid === activeUuid) ?? null;
 }
@@ -226,10 +249,10 @@ function renderGrid() {
     cell.className = `dex-cell ${status}${isShiny ? ' shiny-cell' : ''}`;
     cell.innerHTML = `
       <img class="dex-sprite dex-sprite-${status}"
-           src="${spriteUrl}" alt="${displayName}"
+           src="${spriteUrl}" alt="${esc(displayName)}"
            onerror="this.style.visibility='hidden'">
       <span class="dex-num">#${dexNumber}${isShiny ? ' ✨' : ''}</span>
-      <span class="dex-name">${displayName}</span>
+      <span class="dex-name">${esc(displayName)}</span>
     `;
     if (isCaught) cell.addEventListener('click', () => openModal(player, species));
     grid.appendChild(cell);
@@ -267,7 +290,7 @@ function buildMovesHtml(moves) {
     const type = (typeof m === 'string') ? null : (m?.type ?? null);
     const bg = typeColor(type);
     const fg = typeText(type);
-    return `<span class="move" style="background:${bg};color:${fg}">${name}</span>`;
+    return `<span class="move" style="background:${bg};color:${fg}">${esc(name)}</span>`;
   }).join('');
 }
 
@@ -297,23 +320,25 @@ function buildBallHtml(ball) {
                alt="${ball}" title="${ball}" onerror="this.style.display='none'">`;
 }
 
-function buildCardHtml(p) {
-  const label = p.nickname
-    ? `${p.nickname}${p.shiny ? ' ✨' : ''}`
-    : `${p.shiny ? '✨ ' : ''}${p.displayName}`;
-  const genderIcon = p.gender === 'MALE' ? '♂' : p.gender === 'FEMALE' ? '♀' : '⚲';
+function buildCardHtml(p, isBest = false) {
+  const name = p.nickname
+    ? `${esc(p.nickname)}${p.shiny ? ' ✨' : ''}`
+    : `${p.shiny ? '✨ ' : ''}${esc(p.displayName)}`;
   const movesHtml  = buildMovesHtml(p.moves);
   const statsHtml  = buildStatsHtml(p.stats, p.ivs);
   const ballHtml   = buildBallHtml(p.ball);
   const shinyClass = p.shiny ? ' shiny-card' : '';
-  const ballLabel  = p.ball ? ` ${p.ball}` : '';
+  const bestClass  = isBest ? ' best-pokemon' : '';
+  const bestBadge  = isBest ? '<span class="best-badge">★ BEST</span>' : '';
+  const ballLabel  = p.ball ? ` ${esc(p.ball)}` : '';
   return `
-    <div class="pokemon-card${shinyClass}">
+    <div class="pokemon-card${shinyClass}${bestClass}">
+      ${bestBadge}
       <div class="card-head">
-        <span class="poke-name">${label}</span>
+        <span class="poke-name">${name}</span>
         <span class="poke-level">Lv.${p.level}</span>
       </div>
-      <div class="card-meta">${p.nature} · ${genderIcon}${ballHtml ? ` · ${ballHtml}${ballLabel}` : ''} · ${p.location}</div>
+      <div class="card-meta">${esc(p.nature)} · ${genderHtml(p.gender)}${ballHtml ? ` · ${ballHtml}${ballLabel}` : ''} · ${locationHtml(p.location)}</div>
       <div class="moves">${movesHtml}</div>
       ${statsHtml}
     </div>`;
@@ -340,7 +365,10 @@ function renderTeam() {
   party.forEach(p => p.types.forEach(t => { typeCounts[t] = (typeCounts[t] || 0) + 1; }));
   const typeHtml = Object.entries(typeCounts)
     .sort((a, b) => b[1] - a[1])
-    .map(([t]) => `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`)
+    .map(([t]) => {
+      const cls = TYPE_COLORS[t.toLowerCase()] ? t.toLowerCase() : 'normal';
+      return `<span class="type-badge type-${cls}">${esc(t)}</span>`;
+    })
     .join('');
 
   const partyHtml = party.map(p => {
@@ -394,21 +422,24 @@ function openModal(player, species) {
   const first    = entries[0];
   const hasShiny = entries.some(p => p.shiny);
   const typeBadges = first.types
-    .map(t => `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`)
+    .map(t => {
+      const cls = TYPE_COLORS[t.toLowerCase()] ? t.toLowerCase() : 'normal';
+      return `<span class="type-badge type-${cls}">${esc(t)}</span>`;
+    })
     .join('');
 
   const artUrl      = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${hasShiny ? 'shiny/' : ''}${first.dexNumber}.png`;
   const artFallback = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${hasShiny ? 'shiny/' : ''}${first.dexNumber}.png`;
 
   el('modal-title').innerHTML = `
-    <img class="modal-artwork" src="${artUrl}" alt="${first.displayName}"
+    <img class="modal-artwork" src="${artUrl}" alt="${esc(first.displayName)}"
          onerror="this.src='${artFallback}'">
     <div class="modal-title-info">
       <div class="modal-title-name">
-        <span>#${String(first.dexNumber).padStart(3,'0')} ${first.displayName}</span>
+        <span>#${String(first.dexNumber).padStart(3,'0')} ${esc(first.displayName)}</span>
         ${typeBadges}
       </div>
-      <span class="modal-owner">${player.playerName} has ${entries.length}</span>
+      <span class="modal-owner">${esc(player.playerName)} has ${entries.length}</span>
     </div>`;
 
   el('modal-cards').innerHTML = entries.map(buildCardHtml).join('');

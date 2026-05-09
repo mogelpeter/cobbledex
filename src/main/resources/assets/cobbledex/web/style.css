@@ -253,3 +253,17 @@ main { padding: 18px 24px; }
 .team-types     { display: flex; gap: 4px; flex-wrap: wrap; }
 
 .empty-msg { color: var(--muted); text-align: center; padding: 48px 0; }
+
+/* ─── Gender / Location badges ───────────────────────────────────────────── */
+.gender-m { color: #60a5fa; font-weight: 700; }
+.gender-f { color: #f472b6; font-weight: 700; }
+.gender-n { color: #9ca3af; }
+
+.location-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 0.68rem; padding: 1px 7px; border-radius: 4px;
+  border: 1px solid var(--border); color: var(--muted);
+  background: var(--surface); white-space: nowrap;
+}
+.pc-badge    { border-color: var(--accent); color: var(--accent); background: #0d1525; }
+.party-badge { border-color: var(--caught-color); color: var(--caught-color); background: #0c1a10; }

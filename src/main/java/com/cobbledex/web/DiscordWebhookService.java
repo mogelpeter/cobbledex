@@ -47,6 +47,11 @@ public class DiscordWebhookService {
                 .build();
 
         http.sendAsync(request, HttpResponse.BodyHandlers.discarding())
+                .thenAccept(res -> {
+                    if (res.statusCode() < 200 || res.statusCode() >= 300) {
+                        LOGGER.warn("CobbleDex: Discord webhook returned HTTP {}", res.statusCode());
+                    }
+                })
                 .exceptionally(e -> {
                     LOGGER.warn("CobbleDex: Discord webhook POST failed: {}", e.getMessage());
                     return null;

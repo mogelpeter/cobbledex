@@ -59,4 +59,30 @@ class DiscordWebhookServiceTest {
         assertTrue(json.contains("Flamethrower"));
         assertTrue(json.contains("Earthquake"));
     }
+
+    private static PokemonEntry makeDefensiveEntry() {
+        return new PokemonEntry(
+            "bulbasaur", 1, "Bulbasaur",
+            List.of("Grass", "Poison"),
+            null,   // no nickname
+            5, "Bashful", "MALE", false,
+            null,   // null moves
+            null,   // null ivs
+            null,   // null evs
+            null,   // null stats
+            "",     // blank ball
+            "party"
+        );
+    }
+
+    @Test
+    void buildPayload_nullMovesAndIvs_doesNotThrow() {
+        assertDoesNotThrow(() -> DiscordWebhookService.buildPayload("Dave", makeDefensiveEntry()));
+    }
+
+    @Test
+    void buildPayload_blankBall_showsUnknown() {
+        String json = DiscordWebhookService.buildPayload("Dave", makeDefensiveEntry());
+        assertTrue(json.contains("Unknown"));
+    }
 }

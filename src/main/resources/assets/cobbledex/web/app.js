@@ -218,7 +218,9 @@ function activePlayer() {
   return state.players.find(p => p.uuid === activeUuid) ?? null;
 }
 function renderCurrent() {
-  if (activeView === 'dex') renderGrid(); else renderTeam();
+  if (activeView === 'dex') renderGrid();
+  else if (activeView === 'team') renderTeam();
+  else renderWanted();
 }
 function el(id) { return document.getElementById(id); }
 
@@ -226,21 +228,27 @@ function el(id) { return document.getElementById(id); }
 
 function setView(view) {
   activeView = view;
-  const tabDex  = el('tab-dex');
-  const tabTeam = el('tab-team');
-  if (tabDex)  tabDex.className  = 'view-tab' + (view === 'dex'  ? ' active' : '');
-  if (tabTeam) tabTeam.className = 'view-tab' + (view === 'team' ? ' active' : '');
-  const isDex = view === 'dex';
-  const grid     = el('dex-grid');
-  const stats    = el('dex-stats');
-  const sortCtrl = el('sort-controls');
-  const search   = el('search-input');
-  const teamView = el('team-view');
-  if (grid)     grid.style.display     = isDex ? 'grid'  : 'none';
-  if (stats)    stats.style.display    = isDex ? 'block' : 'none';
-  if (sortCtrl) sortCtrl.style.display = isDex ? 'flex'  : 'none';
-  if (search)   search.style.display   = isDex ? ''      : 'none';
-  if (teamView) teamView.style.display = isDex ? 'none'  : 'block';
+  const tabDex    = el('tab-dex');
+  const tabTeam   = el('tab-team');
+  const tabWanted = el('tab-wanted');
+  if (tabDex)    tabDex.className    = 'view-tab' + (view === 'dex'    ? ' active' : '');
+  if (tabTeam)   tabTeam.className   = 'view-tab' + (view === 'team'   ? ' active' : '');
+  if (tabWanted) tabWanted.className = 'view-tab' + (view === 'wanted' ? ' active' : '');
+  const isDex    = view === 'dex';
+  const isTeam   = view === 'team';
+  const isWanted = view === 'wanted';
+  const grid       = el('dex-grid');
+  const stats      = el('dex-stats');
+  const sortCtrl   = el('sort-controls');
+  const search     = el('search-input');
+  const teamView   = el('team-view');
+  const wantedView = el('wanted-view');
+  if (grid)       grid.style.display       = isDex   ? 'grid'  : 'none';
+  if (stats)      stats.style.display      = isDex   ? 'block' : 'none';
+  if (sortCtrl)   sortCtrl.style.display   = isDex   ? 'flex'  : 'none';
+  if (search)     search.style.display     = isDex   ? ''      : 'none';
+  if (teamView)   teamView.style.display   = isTeam  ? 'block' : 'none';
+  if (wantedView) wantedView.style.display = isWanted ? 'block' : 'none';
   renderCurrent();
 }
 
@@ -357,12 +365,10 @@ function buildFallbackList(caught, seen, player) {
 function buildMovesHtml(moves) {
   if (!moves?.length) return '';
   return moves.map(m => {
-    // m may be a string (old format) or {name, type} object
     const name = (typeof m === 'string') ? m : (m?.name ?? String(m));
-    const type = (typeof m === 'string') ? null : (m?.type ?? null);
-    const bg = typeColor(type);
-    const fg = typeText(type);
-    return `<span class="move" style="background:${bg};color:${fg}">${esc(name)}</span>`;
+    const type = (typeof m === 'string') ? null : (m?.type?.toLowerCase() ?? null);
+    const cls  = type && TYPE_COLORS[type] ? ` type-${type}` : '';
+    return `<span class="move${cls}">${esc(name)}</span>`;
   }).join('');
 }
 
@@ -371,18 +377,23 @@ function buildStatsHtml(stats, ivs) {
   return `<div class="stat-bars">${
     Object.entries(stats).map(([key, val]) => {
       const pct  = Math.min(100, Math.round((val / 400) * 100));
-      const col  = STAT_COLORS[key] || '#888';
       const iv   = ivs?.[key] ?? 0;
       const ivcl = iv >= 30 ? 'hi' : iv <= 5 ? 'lo' : '';
       return `
         <div class="stat-row">
           <span class="stat-lbl">${STAT_LABELS[key]}</span>
-          <div class="stat-track"><div class="stat-fill" style="width:${pct}%;background:${col}"></div></div>
+          <div class="stat-track"><div class="stat-fill stat-fill-${key}" data-pct="${pct}"></div></div>
           <span class="stat-num">${val}</span>
           <span class="iv-tag ${ivcl}">${iv}</span>
         </div>`;
     }).join('')
   }</div>`;
+}
+
+function applyStatWidths(container) {
+  container.querySelectorAll('.stat-fill[data-pct]').forEach(fill => {
+    fill.style.width = fill.dataset.pct + '%';
+  });
 }
 
 function buildBallHtml(ball) {
@@ -478,7 +489,7 @@ function renderTeam() {
     })
     .join('');
 
-  const best = calcBestPokemon(player.pokemon);
+  const best = calcBestPokemon(party);
   const partyHtml = party.map(p => buildTeamCardHtml(p, p === best))
     .join('') || '<p class="empty-msg">No Pokémon in party.</p>';
 
@@ -492,6 +503,42 @@ function renderTeam() {
     </div>
     ${typeHtml ? `<div class="party-types">${typeHtml}</div>` : ''}
     <div class="team-grid">${partyHtml}</div>`;
+  applyStatWidths(teamView);
+}
+
+// ─── Wanted (seen, not caught) ────────────────────────────────────────────────
+
+function renderWanted() {
+  const player     = activePlayer();
+  const wantedView = el('wanted-view');
+  if (!wantedView) return;
+  if (!player) { wantedView.innerHTML = '<p class="empty-msg">No players online.</p>'; return; }
+
+  const caught = new Set(player.caughtSpecies);
+  const seen   = new Set(player.seenSpecies);
+
+  const targets = state.allSpecies
+    .filter(s => seen.has(s.species) && !caught.has(s.species))
+    .sort((a, b) => a.dexNumber - b.dexNumber);
+
+  if (targets.length === 0) {
+    wantedView.innerHTML = '<p class="empty-msg">All seen Pokémon have been caught!</p>';
+    return;
+  }
+
+  const cells = targets.map(({ dexNumber, species, displayName }) => {
+    const spriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${dexNumber}.png`;
+    return `
+      <div class="dex-cell seen">
+        <img class="dex-sprite dex-sprite-seen" src="${spriteUrl}" alt="${esc(displayName)}">
+        <span class="dex-num">#${dexNumber}</span>
+        <span class="dex-name">${esc(displayName)}</span>
+      </div>`;
+  }).join('');
+
+  wantedView.innerHTML = `
+    <div class="wanted-header">${targets.length} seen · not yet caught</div>
+    <div id="wanted-grid">${cells}</div>`;
 }
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
@@ -524,7 +571,9 @@ function openModal(player, species) {
     </div>`;
 
   const best = calcBestPokemon(player.pokemon);
-  el('modal-cards').innerHTML = entries.map(p => buildCardHtml(p, p === best)).join('');
+  const modalCards = el('modal-cards');
+  modalCards.innerHTML = entries.map(p => buildCardHtml(p, p === best)).join('');
+  applyStatWidths(modalCards);
   el('modal').classList.remove('hidden');
 }
 
@@ -537,8 +586,9 @@ function closeModal() {
 
 el('modal-backdrop').addEventListener('click', closeModal);
 el('modal-close').addEventListener('click', closeModal);
-el('tab-dex').addEventListener('click',  () => setView('dex'));
-el('tab-team').addEventListener('click', () => setView('team'));
+el('tab-dex').addEventListener('click',    () => setView('dex'));
+el('tab-team').addEventListener('click',   () => setView('team'));
+el('tab-wanted').addEventListener('click', () => setView('wanted'));
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 el('sort-select').addEventListener('change', e => {

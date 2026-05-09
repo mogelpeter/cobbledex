@@ -55,10 +55,12 @@ async function init() {
 
 let _sseSource  = null;
 let _sseRetries = 0;
+let _sseTimer   = null;
 const SSE_MAX_RETRIES = 8;
 const SSE_BASE_MS     = 1000;
 
 function connectSSE() {
+  clearTimeout(_sseTimer);
   if (_sseSource) { _sseSource.close(); _sseSource = null; }
   _sseSource = new EventSource('/events');
 
@@ -97,8 +99,9 @@ function connectSSE() {
       return;
     }
     if (badge) { badge.textContent = '● RECONNECTING…'; badge.className = 'live-badge offline'; }
+    // _sseRetries is already 1 on the first failure; -1 keeps the first delay at SSE_BASE_MS
     const delayMs = Math.min(SSE_BASE_MS * Math.pow(2, _sseRetries - 1), 30_000);
-    setTimeout(connectSSE, delayMs);
+    _sseTimer = setTimeout(connectSSE, delayMs);
   };
 }
 

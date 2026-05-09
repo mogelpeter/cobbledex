@@ -35,6 +35,9 @@ dependencies {
     // Version matches what NeoForge pulls in at runtime.
     pureUnitTest "org.apache.logging.log4j:log4j-api:2.22.1"
     pureUnitTest "org.apache.logging.log4j:log4j-core:2.22.1"
+    // Gson is bundled inside NeoForge at runtime but not available on the isolated
+    // pureUnitTest classpath — add it explicitly so DiscordWebhookService can initialise.
+    pureUnitTest "com.google.code.gson:gson:2.10.1"
 }
 
 tasks.withType(ProcessResources).configureEach {

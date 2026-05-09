@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Skip version bump if only build.gradle itself is staged — prevents infinite loop.
+NON_GRADLE=$(git diff --cached --name-only | grep -v '^build\.gradle$' || true)
+[ -z "$NON_GRADLE" ] && exit 0
+
+# Extract current version (format: version = '1.2.3')
+CURRENT=$(sed -n "s/^version = '\\(.*\\)'$/\\1/p" build.gradle | head -1)
+[ -z "$CURRENT" ] && exit 0
+
+IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+NEW_PATCH=$((PATCH + 1))
+NEW="${MAJOR}.${MINOR}.${NEW_PATCH}"
+
+# Replace version line in build.gradle
+sed -i "s/^version = '${CURRENT}'\$/version = '${NEW}'/" build.gradle
+git add build.gradle
+
+echo "[CobbleDex] version ${CURRENT} → ${NEW}"

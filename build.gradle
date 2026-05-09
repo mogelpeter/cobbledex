@@ -11,29 +11,30 @@ java {
     toolchain.languageVersion = JavaLanguageVersion.of(21)
 }
 
-runs {
-    configureEach {
-        systemProperty 'forge.logging.markers', 'REGISTRIES'
-        systemProperty 'forge.logging.console.level', 'debug'
-        modSource project.sourceSets.main
-    }
-    server {
-        jvmArgs '--add-modules', 'jdk.httpserver'
-        programArgument '--nogui'
-    }
-}
 
-repositories {
-    maven {
-        name = 'Cobblemon'
-        url = 'https://maven.cobblemon.dev/releases'
-    }
+// Separate configuration for pure unit tests — NeoForge never touches this.
+configurations {
+    pureUnitTest
 }
 
 dependencies {
     implementation "net.neoforged:neoforge:21.1.226"
-    // VERIFY: exact artifact ID at https://maven.cobblemon.dev/releases/com/cobblemon/
-    compileOnly "com.cobblemon:mod-neoforge:1.7.3+1.21.1"
+    // Cobblemon JAR from the installed modpack — provided at runtime, compile-only here
+    compileOnly files("C:/Users/lyx/curseforge/minecraft/Instances/All the Mons - ATMons/mods/Cobblemon-neoforge-1.7.3+1.21.1.jar")
+    // Kotlin stdlib needed to resolve KMappedMarker on Cobblemon's Kotlin classes at compile time.
+    // Cobblemon doesn't bundle Kotlin — use the copy already present in the Gradle distribution.
+    compileOnly fileTree(dir: "${gradle.gradleHomeDir}/lib", include: 'kotlin-stdlib-*.jar')
+    testImplementation platform("org.junit:junit-bom:5.10.3")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    // Same JUnit artifacts on the isolated configuration
+    pureUnitTest platform("org.junit:junit-bom:5.10.3")
+    pureUnitTest "org.junit.jupiter:junit-jupiter"
+    pureUnitTest "org.junit.platform:junit-platform-launcher"
+    // Log4j 2 API + simple no-op core so LogManager.getLogger() resolves at test time.
+    // Version matches what NeoForge pulls in at runtime.
+    pureUnitTest "org.apache.logging.log4j:log4j-api:2.22.1"
+    pureUnitTest "org.apache.logging.log4j:log4j-core:2.22.1"
 }
 
 tasks.withType(ProcessResources).configureEach {
@@ -58,6 +59,15 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
-test {
+// Separate unit test task that bypasses NeoForge's Minecraft test runner.
+// NeoForge registers JUnitService as a LauncherSessionListener via ServiceLoader;
+// it crashes on startup looking for mainargs.txt. Use a completely isolated
+// configuration (pureUnitTest) so NeoForge never touches the classpath.
+// Use: .\gradlew.bat unitTest
+tasks.register('unitTest', Test) {
+    description = 'Runs unit tests without launching Minecraft.'
+    group = 'verification'
     useJUnitPlatform()
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = configurations.pureUnitTest + sourceSets.main.output + sourceSets.test.output
 }

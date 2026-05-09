@@ -1,0 +1,242 @@
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --border: #30363d;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --caught-color: #3fb950;
+  --seen-color: #388bfd;
+  --accent: #58a6ff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; min-height: 100vh; }
+
+header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface);
+}
+header h1 { font-size: 1.3rem; }
+.live-badge { color: var(--caught-color); font-size: 0.8rem; }
+.live-badge.offline { color: #f85149; }
+
+/* Player tabs */
+nav {
+  display: flex; gap: 4px; padding: 10px 24px;
+  border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap;
+}
+.tab {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  padding: 5px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.15s;
+}
+.tab:hover  { border-color: var(--accent); color: var(--accent); }
+.tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+main { padding: 18px 24px; }
+
+/* Controls bar — view tabs + search + sort side-by-side */
+.controls-bar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+}
+#view-tabs { display: flex; gap: 6px; }
+#sort-controls { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.sort-label { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+
+#search-input {
+  flex: 1; min-width: 160px; max-width: 280px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  padding: 5px 11px; border-radius: 6px; font-size: 0.82rem; outline: none;
+}
+#search-input::placeholder { color: var(--muted); }
+#search-input:focus { border-color: var(--accent); }
+
+#sort-select {
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  padding: 5px 10px; border-radius: 6px; font-size: 0.82rem; cursor: pointer; outline: none;
+}
+#sort-select:focus { border-color: var(--accent); }
+
+.view-tab {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  padding: 5px 14px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; transition: all 0.15s;
+}
+.view-tab:hover { border-color: var(--accent); color: var(--accent); }
+.view-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+#dex-stats { color: var(--muted); font-size: 0.85rem; margin-bottom: 14px; }
+
+/* ─── Pokédex grid ─────────────────────────────────────────────────────────── */
+#dex-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 5px;
+}
+.dex-cell {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 5px 7px; text-align: center; display: flex; flex-direction: column;
+  align-items: center; gap: 2px;
+  position: relative; overflow: hidden;
+}
+.dex-cell.caught { border-color: var(--caught-color); cursor: pointer; }
+.dex-cell.caught:hover { transform: scale(1.05); border-color: #56d364; }
+.dex-cell.caught .dex-name { color: var(--caught-color); }
+.dex-cell.seen  { border-color: var(--seen-color); }
+.dex-cell.seen  .dex-name { color: var(--seen-color); }
+.dex-cell.unseen { border-color: #21262d; opacity: 0.4; }
+.dex-cell.unseen .dex-name { color: var(--muted); }
+.dex-cell.unseen .dex-num  { color: #484f58; }
+
+.dex-num  { font-size: 0.65rem; color: var(--muted); }
+.dex-name { font-size: 0.7rem; }
+
+/* Sprites */
+.dex-sprite { width: 56px; height: 56px; object-fit: contain; image-rendering: pixelated; }
+/* Seen but not caught: grey shadow — you recognise it but haven't caught it */
+.dex-sprite-seen   { filter: grayscale(1) brightness(0.55); }
+/* Unseen: pure black silhouette */
+.dex-sprite-unseen { filter: brightness(0); }
+
+/* Shiny: gold border + sweeping foil overlay */
+.shiny-cell,
+.shiny-card {
+  border-color: #ffd700 !important;
+}
+
+.pokemon-card { position: relative; overflow: hidden; }
+.team-card    { position: relative; overflow: hidden; }
+
+@keyframes shiny-sweep {
+  0%        { transform: translate(-160%, -60%) rotate(20deg); opacity: 0; }
+  10%       { opacity: 1; }
+  60%, 100% { transform: translate(160%,   60%) rotate(20deg); opacity: 0; }
+}
+
+.shiny-cell::after,
+.shiny-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 55%; height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent              0%,
+    rgba(255, 230,  80, 0.0) 30%,
+    rgba(255, 230, 100, 0.55) 50%,
+    rgba(255, 255, 200, 0.35) 56%,
+    rgba(255, 230,  80, 0.0) 70%,
+    transparent             100%
+  );
+  animation: shiny-sweep 3.2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ─── Modal ────────────────────────────────────────────────────────────────── */
+#modal { display: none; position: fixed; inset: 0; z-index: 200; }
+#modal:not(.hidden) { display: flex; align-items: center; justify-content: center; }
+#modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.75); cursor: pointer; }
+#modal-box {
+  position: relative; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 20px; width: min(860px, 94vw); max-height: 88vh;
+  overflow-y: auto; z-index: 1;
+}
+#modal-title {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.modal-artwork { width: 120px; height: 120px; object-fit: contain; flex-shrink: 0; }
+.modal-title-info { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.modal-title-name {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 1.05rem; font-weight: 600;
+}
+.modal-owner { font-size: 0.78rem; color: var(--muted); }
+#modal-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+
+/* Pokémon card */
+.pokemon-card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 11px;
+}
+.card-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.poke-name  { font-weight: 600; font-size: 0.9rem; }
+.poke-level { color: var(--caught-color); font-size: 0.82rem; }
+.card-meta  { color: var(--muted); font-size: 0.74rem; margin-bottom: 7px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.moves { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 7px; }
+.move {
+  border-radius: 4px; padding: 2px 8px; font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.02em; text-shadow: 0 1px 1px rgba(0,0,0,0.25);
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.18);
+  white-space: nowrap;
+}
+
+/* Ball icon */
+.ball-icon { width: 16px; height: 16px; object-fit: contain; vertical-align: middle; image-rendering: pixelated; }
+
+/* ─── Stat bars ────────────────────────────────────────────────────────────── */
+.stat-bars { display: flex; flex-direction: column; gap: 3px; margin-top: 2px; }
+.stat-row  { display: flex; align-items: center; gap: 5px; }
+.stat-lbl  { width: 28px; font-size: 0.62rem; color: var(--muted); text-align: right; }
+.stat-track { flex: 1; background: #21262d; border-radius: 3px; height: 5px; overflow: hidden; }
+.stat-fill  { height: 5px; border-radius: 3px; transition: width 0.3s; }
+.stat-num  { width: 28px; font-size: 0.7rem; font-weight: 600; text-align: right; }
+.iv-tag    { width: 18px; font-size: 0.6rem; color: var(--muted); text-align: center; }
+.iv-tag.hi { color: var(--caught-color); }
+.iv-tag.lo { color: #f85149; }
+
+/* Type badges */
+.type-badge {
+  font-size: 0.68rem; padding: 2px 7px; border-radius: 4px; color: #fff; font-weight: 500;
+}
+.type-normal   { background: #9b9b9b; color: #000; }
+.type-fire     { background: #f05030; }
+.type-water    { background: #6890f0; }
+.type-grass    { background: #78c850; color: #000; }
+.type-electric { background: #f8d030; color: #000; }
+.type-ice      { background: #98d8d8; color: #000; }
+.type-fighting { background: #c03028; }
+.type-poison   { background: #a040a0; }
+.type-ground   { background: #e0c068; color: #000; }
+.type-flying   { background: #a890f0; }
+.type-psychic  { background: #f85888; }
+.type-bug      { background: #a8b820; color: #000; }
+.type-rock     { background: #b8a038; }
+.type-ghost    { background: #705898; }
+.type-dragon   { background: #7038f8; }
+.type-dark     { background: #705848; }
+.type-steel    { background: #b8b8d0; color: #000; }
+.type-fairy    { background: #ee99ac; color: #000; }
+
+#modal-close {
+  margin-top: 14px; background: var(--border); border: none; color: var(--text);
+  padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+}
+#modal-close:hover { background: var(--accent); }
+
+/* ─── Team view ────────────────────────────────────────────────────────────── */
+.player-stats {
+  display: flex; gap: 24px; flex-wrap: wrap; align-items: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px 24px; margin-bottom: 16px;
+}
+.stat-item  { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.stat-val   { font-size: 1.5rem; font-weight: 700; }
+.stat-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.caught-val { color: var(--caught-color); }
+.seen-val   { color: var(--seen-color); }
+.accent-val { color: var(--accent); }
+
+.party-types { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 14px; }
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 12px;
+}
+.team-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px; display: flex; gap: 14px; align-items: flex-start;
+}
+.team-sprite    { width: 96px; height: 96px; object-fit: contain; flex-shrink: 0; }
+.team-card-info { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.team-types     { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.empty-msg { color: var(--muted); text-align: center; padding: 48px 0; }

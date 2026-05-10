@@ -3,9 +3,10 @@
 let state = { players: [], allSpecies: [], speciesByDex: new Map(), dexBySpecies: new Map() };
 let activeUuid  = null;
 let activeView  = 'dex';
-let sortBy      = 'dex';
-let searchQuery = '';
-let searchTimer = null;
+let sortBy           = 'dex';
+let searchQuery      = '';
+let searchTimer      = null;
+let activeTypeFilter = null;
 
 // ─── Type colours ─────────────────────────────────────────────────────────────
 
@@ -142,23 +143,13 @@ function connectSSE() {
     }
   };
 
-  const badge = document.getElementById('live-badge');
-
-  _sseSource.onopen = () => {
-    _sseRetries = 0;
-    if (badge) { badge.textContent = '● LIVE'; badge.className = 'live-badge'; }
-  };
+  _sseSource.onopen = () => { _sseRetries = 0; };
 
   _sseSource.onerror = () => {
     _sseSource.close();
     _sseSource = null;
     _sseRetries++;
-    if (_sseRetries >= SSE_MAX_RETRIES) {
-      if (badge) { badge.textContent = '● OFFLINE'; badge.className = 'live-badge offline'; }
-      return;
-    }
-    if (badge) { badge.textContent = '● RECONNECTING…'; badge.className = 'live-badge offline'; }
-    // _sseRetries is already 1 on the first failure; -1 keeps the first delay at SSE_BASE_MS
+    if (_sseRetries >= SSE_MAX_RETRIES) return;
     const delayMs = Math.min(SSE_BASE_MS * Math.pow(2, _sseRetries - 1), 30_000);
     _sseTimer = setTimeout(connectSSE, delayMs);
   };
@@ -227,15 +218,18 @@ function setView(view) {
   const grid       = el('dex-grid');
   const stats      = el('dex-stats');
   const sortCtrl   = el('sort-controls');
-  const search     = el('search-input');
+  const searchWrapper = document.querySelector('.search-wrapper');
+  const typeFilter = el('type-filter');
   const teamView   = el('team-view');
   const wantedView = el('wanted-view');
-  if (grid)       grid.style.display       = isDex   ? 'grid'  : 'none';
-  if (stats)      stats.style.display      = isDex   ? 'block' : 'none';
-  if (sortCtrl)   sortCtrl.style.display   = isDex   ? 'flex'  : 'none';
-  if (search)     search.style.display     = isDex   ? ''      : 'none';
+  if (grid)          grid.style.display          = isDex   ? 'grid'  : 'none';
+  if (stats)         stats.style.display         = isDex   ? 'block' : 'none';
+  if (sortCtrl)      sortCtrl.style.display      = isDex   ? 'flex'  : 'none';
+  if (searchWrapper) searchWrapper.style.display = isDex   ? ''      : 'none';
+  if (typeFilter) typeFilter.style.display = isDex   ? 'flex'  : 'none';
   if (teamView)   teamView.style.display   = isTeam  ? 'block' : 'none';
   if (wantedView) wantedView.style.display = isWanted ? 'block' : 'none';
+  if (!isDex) activeTypeFilter = null;
   renderCurrent();
 }
 

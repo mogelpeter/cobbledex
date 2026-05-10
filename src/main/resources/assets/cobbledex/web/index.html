@@ -12,18 +12,24 @@
 </head>
 <body>
   <header>
-    <h1>CobbleDex</h1>
-    <span id="live-badge" class="live-badge">● LIVE</span>
+    <div class="logo-pill">
+      <img class="logo-pill-icon"
+           src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png"
+           alt="CobbleDex">
+      <h1>CobbleDex</h1>
+    </div>
   </header>
   <nav id="player-tabs"></nav>
   <main>
     <div class="controls-bar">
       <div id="view-tabs">
-        <button id="tab-dex"    class="view-tab active">Pokédex</button>
+        <button id="tab-dex"    class="view-tab active">Cobbledex</button>
         <button id="tab-team"   class="view-tab">Team</button>
         <button id="tab-wanted" class="view-tab">Wanted</button>
       </div>
-      <input id="search-input" type="text" placeholder="Search Pokémon…" autocomplete="off">
+      <div class="search-wrapper">
+        <input id="search-input" type="text" placeholder="Cobblemon suchen…" autocomplete="off">
+      </div>
       <div id="sort-controls">
         <label class="sort-label" for="sort-select">Sort:</label>
         <select id="sort-select">
@@ -34,6 +40,7 @@
       </div>
     </div>
     <div id="dex-stats"></div>
+    <div id="type-filter" class="type-filter-row"></div>
     <div id="dex-grid"></div>
     <div id="team-view"></div>
     <div id="wanted-view" style="display:none"></div>

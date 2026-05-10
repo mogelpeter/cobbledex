@@ -119,6 +119,20 @@ async function init() {
     if (state.players.length > 0) activeUuid = state.players[0].uuid;
     renderTabs();
     setView('dex');
+
+    // Deep-link: open modal for species in URL hash (e.g. /#charizard from Discord embed)
+    const hashSpecies = window.location.hash.slice(1);
+    if (hashSpecies) {
+      const owner = state.players.find(p =>
+        p.pokemon.some(pk => pk.species === hashSpecies)
+      );
+      if (owner) {
+        activeUuid = owner.uuid;
+        renderTabs();
+        renderGrid();
+        openModal(owner, hashSpecies);
+      }
+    }
   } catch (e) {
     const g = document.getElementById('dex-grid');
     if (g) g.innerHTML = '<p class="empty-msg">Could not connect to CobbleDex server.</p>';

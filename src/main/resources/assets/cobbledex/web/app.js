@@ -57,9 +57,37 @@ const ALL_ATTACKING_TYPES = [
   'ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'
 ];
 
+// ─── Stars background ─────────────────────────────────────────────────────────
+
+function generateStars() {
+  const container = document.createElement('div');
+  container.id = 'stars-container';
+  const colors = ['#ffffff', '#ffffff', '#ffffff', '#a0c4ff', '#ffd700', '#c4b5fd'];
+  for (let i = 0; i < 35; i++) {
+    const star = document.createElement('div');
+    const size = Math.random() < 0.7 ? 1 : 2;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const delay    = (Math.random() * 4).toFixed(2);
+    const duration = (1.5 + Math.random() * 3).toFixed(2);
+    star.style.cssText = [
+      'position:absolute',
+      `width:${size}px`,
+      `height:${size}px`,
+      'border-radius:50%',
+      `background:${color}`,
+      `top:${(Math.random() * 95).toFixed(1)}%`,
+      `left:${(Math.random() * 99).toFixed(1)}%`,
+      `animation:twinkle ${duration}s ease-in-out infinite ${delay}s`,
+    ].join(';');
+    container.appendChild(star);
+  }
+  document.body.prepend(container);
+}
+
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
 async function init() {
+  generateStars();
   try {
     const [dataRes, speciesRes] = await Promise.all([fetch('/api/data'), fetch('/api/species')]);
     const data = await dataRes.json();

@@ -33,15 +33,16 @@ public class DiscordWebhookService {
                 .build();
     }
 
-    /** Called when a player catches a Pokemon. No-op if webhook is disabled or URL invalid. */
+    /** Called when a player catches a Cobblemon. No-op if webhook is disabled or URL invalid. */
     public void notifyCatch(String playerName, PokemonEntry pokemon) {
         if (!CobbleDexConfig.DISCORD_WEBHOOK_ENABLED.get()) return;
-        String url = CobbleDexConfig.DISCORD_WEBHOOK_URL.get();
-        if (!StartupValidator.validateWebhookUrl(url)) return;
+        String webhookUrl = CobbleDexConfig.DISCORD_WEBHOOK_URL.get();
+        if (!StartupValidator.validateWebhookUrl(webhookUrl)) return;
 
-        String payload = buildPayload(playerName, pokemon);
+        String publicUrl = CobbleDexConfig.COBBLEDEX_PUBLIC_URL.get();
+        String payload = buildPayload(playerName, pokemon, publicUrl);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
+                .uri(URI.create(webhookUrl))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(payload))
                 .timeout(Duration.ofSeconds(10))
@@ -59,15 +60,18 @@ public class DiscordWebhookService {
                 });
     }
 
-    /** Package-private for unit testing without network calls. */
-    static String buildPayload(String playerName, PokemonEntry p) {
+    /**
+     * Package-private for unit testing without network calls.
+     * publicUrl: base URL of this CobbleDex instance (no trailing slash), or blank to omit the link.
+     */
+    static String buildPayload(String playerName, PokemonEntry p, String publicUrl) {
         boolean shiny = p.shiny();
         int color = shiny ? 0xFFD700 : 0x3FB950;
         String title = (shiny ? "✨ Shiny " : "") + p.displayName() + " was caught!";
 
         List<Map<String, Object>> fields = new ArrayList<>();
         addField(fields, "Player",  playerName, true);
-        addField(fields, "Pokemon",
+        addField(fields, "Cobblemon",
                 "#" + String.format("%03d", p.dexNumber()) + " " + p.displayName(), true);
         addField(fields, "Level",   String.valueOf(p.level()),  true);
         addField(fields, "Nature",  p.nature(),                 true);
@@ -102,7 +106,9 @@ public class DiscordWebhookService {
 
         Map<String, Object> embed = new LinkedHashMap<>();
         embed.put("title",     title);
-        embed.put("url",       "https://dex.lyx.wtf/");
+        if (publicUrl != null && !publicUrl.isBlank()) {
+            embed.put("url", publicUrl + "#" + p.species());
+        }
         embed.put("color",     color);
         embed.put("thumbnail", Map.of("url", spriteUrl));
         embed.put("fields",    fields);

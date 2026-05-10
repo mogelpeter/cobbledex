@@ -27,9 +27,18 @@ class DiscordWebhookServiceTest {
         );
     }
 
+    private static PokemonEntry makeDefensiveEntry() {
+        return new PokemonEntry(
+            "bulbasaur", 1, "Bulbasaur",
+            List.of("Grass", "Poison"),
+            null, 5, "Bashful", "MALE", false,
+            null, null, null, null, "", "party"
+        );
+    }
+
     @Test
     void buildPayload_normalPokemon_containsPlayerAndSpecies() {
-        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null));
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null), "");
         assertTrue(json.contains("Steve"));
         assertTrue(json.contains("Charizard"));
         assertTrue(json.contains("Charizard was caught!"));
@@ -37,90 +46,87 @@ class DiscordWebhookServiceTest {
 
     @Test
     void buildPayload_shinyPokemon_hasShinyInTitle() {
-        String json = DiscordWebhookService.buildPayload("Alex", makeEntry(true, null));
+        String json = DiscordWebhookService.buildPayload("Alex", makeEntry(true, null), "");
         assertTrue(json.contains("Shiny Charizard was caught!"));
     }
 
     @Test
     void buildPayload_withNickname_includesNickname() {
-        String json = DiscordWebhookService.buildPayload("Bob", makeEntry(false, "Blaze"));
+        String json = DiscordWebhookService.buildPayload("Bob", makeEntry(false, "Blaze"), "");
         assertTrue(json.contains("Blaze"));
     }
 
     @Test
     void buildPayload_hasIvField() {
-        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null));
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null), "");
         assertTrue(json.contains("31/31/31/31/31/31"));
     }
 
     @Test
     void buildPayload_hasMoveNames() {
-        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null));
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null), "");
         assertTrue(json.contains("Flamethrower"));
         assertTrue(json.contains("Earthquake"));
     }
 
-    private static PokemonEntry makeDefensiveEntry() {
-        return new PokemonEntry(
-            "bulbasaur", 1, "Bulbasaur",
-            List.of("Grass", "Poison"),
-            null,   // no nickname
-            5, "Bashful", "MALE", false,
-            null,   // null moves
-            null,   // null ivs
-            null,   // null evs
-            null,   // null stats
-            "",     // blank ball
-            "party"
-        );
-    }
-
     @Test
     void buildPayload_nullMovesAndIvs_doesNotThrow() {
-        assertDoesNotThrow(() -> DiscordWebhookService.buildPayload("Dave", makeDefensiveEntry()));
+        assertDoesNotThrow(() -> DiscordWebhookService.buildPayload("Dave", makeDefensiveEntry(), ""));
     }
 
     @Test
     void buildPayload_blankBall_showsUnknown() {
-        String json = DiscordWebhookService.buildPayload("Dave", makeDefensiveEntry());
+        String json = DiscordWebhookService.buildPayload("Dave", makeDefensiveEntry(), "");
         assertTrue(json.contains("Unknown"));
     }
 
     @Test
-    void buildPayload_hasTitleUrl() {
-        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null));
-        assertTrue(json.contains("dex.lyx.wtf"));
+    void buildPayload_withPublicUrl_embedContainsSpeciesLink() {
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null), "https://dex.example.com");
+        assertTrue(json.contains("https://dex.example.com#charizard"));
+    }
+
+    @Test
+    void buildPayload_withoutPublicUrl_embedHasNoUrlField() {
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null), "");
+        assertFalse(json.contains("#charizard"));
+    }
+
+    @Test
+    void buildPayload_shinyWithPublicUrl_linkContainsSpecies() {
+        String json = DiscordWebhookService.buildPayload("Alex", makeEntry(true, null), "https://dex.example.com");
+        assertTrue(json.contains("https://dex.example.com#charizard"));
     }
 
     @Test
     void buildPayload_hasThumbnailWithSpriteUrl() {
-        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null));
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null), "");
         assertTrue(json.contains("\"thumbnail\""));
         assertTrue(json.contains("sprites/pokemon/6.png"));
     }
 
     @Test
     void buildPayload_shinyHasShinySpriteUrl() {
-        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(true, null));
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(true, null), "");
         assertTrue(json.contains("sprites/pokemon/shiny/6.png"));
     }
 
     @Test
     void buildPayload_hasFooter() {
-        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null));
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null), "");
         assertTrue(json.contains("\"footer\""));
         assertTrue(json.contains("CobbleDex"));
     }
 
     @Test
     void buildPayload_hasTimestamp() {
-        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null));
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null), "");
         assertTrue(json.contains("\"timestamp\""));
     }
 
     @Test
     void buildPayload_hasWebhookUsernameAndAvatar() {
-        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null));
+        String json = DiscordWebhookService.buildPayload("Steve", makeEntry(false, null), "");
         assertTrue(json.contains("\"username\""));
         assertTrue(json.contains("\"avatar_url\""));
         assertTrue(json.contains("poke-ball.png"));

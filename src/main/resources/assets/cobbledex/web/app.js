@@ -248,6 +248,43 @@ function renderTabs() {
   });
 }
 
+// ─── Type filter ──────────────────────────────────────────────────────────────
+
+function renderTypeFilter() {
+  const row = el('type-filter');
+  if (!row) return;
+  const player = activePlayer();
+  if (!player) { row.innerHTML = ''; return; }
+
+  const availableTypes = new Set();
+  player.pokemon.forEach(p => p.types.forEach(t => availableTypes.add(t.toLowerCase())));
+
+  const ALL_TYPES = [
+    'normal','fire','water','electric','grass','ice','fighting','poison',
+    'ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy',
+  ];
+
+  const allBtn = document.createElement('button');
+  allBtn.className = 'type-btn type-btn-all' + (activeTypeFilter === null ? ' active' : '');
+  allBtn.dataset.type = '';
+  allBtn.textContent = 'All';
+  row.innerHTML = '';
+  row.appendChild(allBtn);
+
+  ALL_TYPES.filter(t => availableTypes.has(t)).forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'type-btn type-btn-' + t + (activeTypeFilter === t ? ' active' : '');
+    btn.dataset.type = t;
+    btn.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+    row.appendChild(btn);
+  });
+}
+
+function setTypeFilter(type) {
+  activeTypeFilter = (activeTypeFilter === type || type === '') ? null : type;
+  renderGrid();
+}
+
 // ─── Pokédex grid ─────────────────────────────────────────────────────────────
 
 function renderGrid() {
@@ -255,6 +292,8 @@ function renderGrid() {
   const grid   = el('dex-grid');
   const stats  = el('dex-stats');
   if (!grid) return;
+
+  renderTypeFilter();
 
   if (!player) {
     grid.innerHTML = '<p class="empty-msg">No players online.</p>';
@@ -292,6 +331,19 @@ function renderGrid() {
     speciesList = speciesList.filter(s =>
       (s.displayName || s.species).toLowerCase().includes(q) ||
       String(s.dexNumber).startsWith(q)
+    );
+  }
+
+  // Type filter — only caught Cobblemon have known type data
+  if (activeTypeFilter !== null) {
+    const typesBySpecies = new Map();
+    player.pokemon.forEach(p => {
+      if (!typesBySpecies.has(p.species))
+        typesBySpecies.set(p.species, p.types.map(t => t.toLowerCase()));
+    });
+    speciesList = speciesList.filter(s =>
+      typesBySpecies.has(s.species) &&
+      typesBySpecies.get(s.species).includes(activeTypeFilter)
     );
   }
 
@@ -585,6 +637,11 @@ el('search-input').addEventListener('input', e => {
     searchQuery = e.target.value;
     renderGrid();
   }, 220);
+});
+
+el('type-filter').addEventListener('click', e => {
+  const btn = e.target.closest('.type-btn');
+  if (btn) setTypeFilter(btn.dataset.type ?? '');
 });
 
 // ─── Start ────────────────────────────────────────────────────────────────────

@@ -419,3 +419,14 @@ main { padding: 16px 28px; position: relative; z-index: 1; }
 .type-btn-dark     { background: #705848; color: #fff; }
 .type-btn-steel    { background: #b8b8d0; color: #000; }
 .type-btn-fairy    { background: #ee99ac; color: #000; }
+
+/* ─── Favorites ─────────────────────────────────────────────────────────────── */
+.star-btn {
+  position: absolute; top: 4px; right: 5px;
+  background: none; border: none; cursor: pointer;
+  font-size: 0.85rem; line-height: 1; color: #ffd700;
+  opacity: 0.15; transition: opacity 0.15s;
+  padding: 0; z-index: 2;
+}
+.dex-cell:hover .star-btn { opacity: 0.55; }
+.star-btn.starred { opacity: 1 !important; }

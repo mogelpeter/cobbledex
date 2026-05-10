@@ -7,6 +7,21 @@ let sortBy           = 'dex';
 let searchQuery      = '';
 let searchTimer      = null;
 let activeTypeFilter = null;
+let favorites = new Set(JSON.parse(localStorage.getItem('cobbledex-favorites') || '[]'));
+
+function saveFavorites() {
+  localStorage.setItem('cobbledex-favorites', JSON.stringify([...favorites]));
+}
+
+function toggleFavorite(species, btn) {
+  if (favorites.has(species)) {
+    favorites.delete(species);
+  } else {
+    favorites.add(species);
+  }
+  saveFavorites();
+  btn.classList.toggle('starred', favorites.has(species));
+}
 
 // ─── Type colours ─────────────────────────────────────────────────────────────
 
@@ -377,7 +392,19 @@ function renderGrid() {
       <span class="dex-num">#${dexNumber}${isShiny ? ' ✨' : ''}</span>
       <span class="dex-name">${esc(displayName)}</span>
     `;
-    if (isCaught) cell.addEventListener('click', () => openModal(player, species));
+    if (isCaught) {
+      cell.addEventListener('click', () => openModal(player, species));
+      const starBtn = document.createElement('button');
+      starBtn.className = 'star-btn' + (favorites.has(species) ? ' starred' : '');
+      starBtn.textContent = '★';
+      starBtn.title = favorites.has(species) ? 'Remove from favorites' : 'Add to favorites';
+      starBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleFavorite(species, starBtn);
+        starBtn.title = favorites.has(species) ? 'Remove from favorites' : 'Add to favorites';
+      });
+      cell.appendChild(starBtn);
+    }
     grid.appendChild(cell);
   });
 }

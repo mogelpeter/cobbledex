@@ -269,8 +269,18 @@ function renderGrid() {
   player.pokemon.forEach(p => { if (p.shiny) shinySpecies.add(p.species); });
 
   const total = state.allSpecies.length || 1025;
-  const pct = ((caught.size / total) * 100).toFixed(1);
-  if (stats) stats.textContent = `${caught.size} caught · ${seen.size} seen · ${pct}% complete`;
+  const pct    = ((caught.size / total) * 100).toFixed(1);
+  const pctRaw = ((caught.size / total) * 100).toFixed(2);
+  if (stats) {
+    stats.innerHTML = `
+      <div class="progress-meta">
+        <span class="progress-text">${caught.size} caught · ${seen.size} seen</span>
+        <span class="progress-pct">${pct}%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width:${pctRaw}%"></div>
+      </div>`;
+  }
 
   let speciesList = state.allSpecies.length > 0
     ? state.allSpecies
